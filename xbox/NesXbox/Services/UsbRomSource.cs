@@ -33,10 +33,10 @@ namespace NesXbox.Services
             catch (Exception e) when (e is UnauthorizedAccessException || e is InvalidOperationException) { AppServices.Log("DeviceWatcher: " + e.Message); }
         }
 
-        public Task<RomScanResult> ScanAsync(CancellationToken ct)
+        public Task<RomScanResult> ScanAsync(CancellationToken ct, IProgress<string> progress = null)
         {
             var options = new ScanOptions { Recursive = AppServices.Settings.RecursiveUsbScan };
-            return new RomScanner(GetVolumesAsync, options).ScanAsync(ct);
+            return new RomScanner(GetVolumesAsync, options).ScanAsync(ct, progress);
         }
 
         static async Task<IReadOnlyList<IScanFolder>> GetVolumesAsync()
