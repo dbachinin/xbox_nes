@@ -3,7 +3,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="#FF101014">
-    <Grid Padding="24,16,24,16">
+    <!-- Nearest-element XY focus: the default "projection" strategy skips narrow button rows on Xbox. -->
+    <Grid Padding="24,16,24,16" XYFocusUpNavigationStrategy="RectilinearDistance" XYFocusDownNavigationStrategy="RectilinearDistance">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />

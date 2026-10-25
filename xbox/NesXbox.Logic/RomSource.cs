@@ -83,7 +83,8 @@ namespace NesXbox.Logic
 
     public interface IRomSource
     {
-        Task<RomScanResult> ScanAsync(CancellationToken ct);
+        /// <summary><paramref name="progress"/> receives the folder/file currently being read.</summary>
+        Task<RomScanResult> ScanAsync(CancellationToken ct, IProgress<string> progress = null);
     }
 
     public sealed class ScanOptions
@@ -91,6 +92,7 @@ namespace NesXbox.Logic
         public bool Recursive { get; set; } = true;
         public int MaxDepth { get; set; } = 3;          // root = 0
         public int MaxFiles { get; set; } = 2000;       // .nes files listed per scan
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60); // whole scan; a hung device call must not block the UI forever
     }
 
     /// <summary>Scans volumes for .nes files: root first, then /NES, then (optionally) other folders.</summary>
@@ -105,25 +107,58 @@ namespace NesXbox.Logic
             this.options = options ?? new ScanOptions();
         }
 
-        public async Task<RomScanResult> ScanAsync(CancellationToken ct)
+        public async Task<RomScanResult> ScanAsync(CancellationToken ct, IProgress<string> progress = null)
         {
             var result = new RomScanResult();
-            IReadOnlyList<IScanFolder> volumes;
-            try { volumes = await getVolumes().ConfigureAwait(false); }
-            catch (UnauthorizedAccessException e) { return Error(result, RomSourceError.AccessDenied, e); }
-            catch (Exception e) when (e is IOException || e is InvalidOperationException) { return Error(result, RomSourceError.Failed, e); }
-            if (volumes == null || volumes.Count == 0) return Error(result, RomSourceError.NoUsbDrive, null);
-
-            foreach (var v in volumes)
+            string current = "USB drives";
+            void Report(string where) { current = where; progress?.Report(where); }
+            using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct))
             {
-                ct.ThrowIfCancellationRequested();
-                result.Volumes.Add(v.DisplayPath);
-                try { await WalkAsync(v, 0, result, ct).ConfigureAwait(false); }
-                catch (UnauthorizedAccessException e) { Error(result, RomSourceError.AccessDenied, e); }
-                catch (Exception e) when (e is IOException || e is FileNotFoundException) { Error(result, RomSourceError.DriveDisconnected, e); }
-                if (result.Truncated) break;
+                timeout.CancelAfter(options.Timeout);
+                var token = timeout.Token;
+                try
+                {
+                    IReadOnlyList<IScanFolder> volumes;
+                    Report(current);
+                    try { volumes = await Guard(getVolumes(), token).ConfigureAwait(false); }
+                    catch (UnauthorizedAccessException e) { return Error(result, RomSourceError.AccessDenied, e); }
+                    catch (Exception e) when (e is IOException || e is InvalidOperationException) { return Error(result, RomSourceError.Failed, e); }
+                    if (volumes == null || volumes.Count == 0) return Error(result, RomSourceError.NoUsbDrive, null);
+
+                    foreach (var v in volumes)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        result.Volumes.Add(v.DisplayPath);
+                        try { await WalkAsync(v, 0, result, Report, token).ConfigureAwait(false); }
+                        catch (UnauthorizedAccessException e) { Error(result, RomSourceError.AccessDenied, e); }
+                        catch (Exception e) when (e is IOException || e is FileNotFoundException) { Error(result, RomSourceError.DriveDisconnected, e); }
+                        if (result.Truncated) break;
+                    }
+                    return result;
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    // Keep what was found; report where the device stopped answering.
+                    result.Error = RomSourceError.Failed;
+                    result.Message = $"USB scan timed out after {options.Timeout.TotalSeconds:0} s while reading {current}";
+                    return result;
+                }
             }
-            return result;
+        }
+
+        /// <summary>Awaits a device call but gives up on cancellation even if the call itself never completes.</summary>
+        static async Task<T> Guard<T>(Task<T> task, CancellationToken ct)
+        {
+            if (!task.IsCompleted)
+            {
+                var done = await Task.WhenAny(task, Task.Delay(System.Threading.Timeout.Infinite, ct)).ConfigureAwait(false);
+                if (done != task)
+                {
+                    _ = task.ContinueWith(t => { var _ = t.Exception; }, TaskContinuationOptions.OnlyOnFaulted); // observe late faults
+                    ct.ThrowIfCancellationRequested();
+                }
+            }
+            return await task.ConfigureAwait(false);
         }
 
         static RomScanResult Error(RomScanResult r, RomSourceError e, Exception ex)
@@ -133,18 +168,21 @@ namespace NesXbox.Logic
             return r;
         }
 
-        async Task WalkAsync(IScanFolder folder, int depth, RomScanResult result, CancellationToken ct)
+        async Task WalkAsync(IScanFolder folder, int depth, RomScanResult result, Action<string> report, CancellationToken ct)
         {
-            foreach (var f in await folder.GetFilesAsync().ConfigureAwait(false))
+            report(folder.DisplayPath);
+            foreach (var f in await Guard(folder.GetFilesAsync(), ct).ConfigureAwait(false))
             {
                 ct.ThrowIfCancellationRequested();
                 if (!f.Name.EndsWith(".nes", StringComparison.OrdinalIgnoreCase)) continue;
                 if (result.Candidates.Count >= options.MaxFiles) { result.Truncated = true; return; }
-                result.Candidates.Add(await ProbeAsync(f).ConfigureAwait(false));
+                report(f.DisplayPath);
+                result.Candidates.Add(await ProbeAsync(f, ct).ConfigureAwait(false));
             }
             bool descend = depth == 0 || (options.Recursive && depth < options.MaxDepth);
             if (!descend) return;
-            var subs = (await folder.GetFoldersAsync().ConfigureAwait(false))
+            report(folder.DisplayPath);
+            var subs = (await Guard(folder.GetFoldersAsync(), ct).ConfigureAwait(false))
                 // "NES" first; system folders are skipped.
                 .OrderBy(s => string.Equals(s.Name, "NES", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
                 .Where(s => !s.Name.StartsWith(".") && !string.Equals(s.Name, "System Volume Information", StringComparison.OrdinalIgnoreCase))
@@ -152,21 +190,21 @@ namespace NesXbox.Logic
             foreach (var s in subs)
             {
                 if (depth == 0 && !options.Recursive && !string.Equals(s.Name, "NES", StringComparison.OrdinalIgnoreCase)) continue;
-                await WalkAsync(s, depth + 1, result, ct).ConfigureAwait(false);
+                await WalkAsync(s, depth + 1, result, report, ct).ConfigureAwait(false);
                 if (result.Truncated) return;
             }
         }
 
-        static async Task<RomCandidate> ProbeAsync(IScanFile f)
+        static async Task<RomCandidate> ProbeAsync(IScanFile f, CancellationToken ct)
         {
-            long size = await f.GetSizeAsync().ConfigureAwait(false);
+            long size = await Guard(f.GetSizeAsync(), ct).ConfigureAwait(false);
             var c = new RomCandidate { FileName = f.Name, Location = f.DisplayPath, Size = size, File = f };
             if (size > InesHeader.MaxRomBytes) { c.Check = RomCheck.TooLarge; return c; }
             var header = new byte[16];
-            using (var s = await f.OpenReadAsync().ConfigureAwait(false))
+            using (var s = await Guard(f.OpenReadAsync(), ct).ConfigureAwait(false))
             {
                 int n = 0;
-                while (n < 16) { int r = await s.ReadAsync(header, n, 16 - n).ConfigureAwait(false); if (r <= 0) break; n += r; }
+                while (n < 16) { int r = await Guard(s.ReadAsync(header, n, 16 - n, ct), ct).ConfigureAwait(false); if (r <= 0) break; n += r; }
             }
             c.Check = InesHeader.Check(header, size, out var h);
             c.Mapper = h?.Mapper ?? -1;

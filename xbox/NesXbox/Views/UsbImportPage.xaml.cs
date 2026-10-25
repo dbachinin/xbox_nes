@@ -16,7 +16,7 @@ namespace NesXbox.Views
     {
         UsbRomSource source;
         CancellationTokenSource cts;
-        bool busy;
+        bool importing;
 
         public UsbImportPage()
         {
@@ -39,19 +39,23 @@ namespace NesXbox.Views
         }
 
         async void OnDevicesChanged() =>
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () => { if (!busy) await ScanAsync(); });
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () => { if (!importing) await ScanAsync(); });
 
         async void Rescan_Click(object sender, RoutedEventArgs e) => await ScanAsync();
 
+        /// <summary>Rescan is always allowed: it cancels a running scan and starts over.</summary>
         async Task ScanAsync()
         {
-            if (busy || source == null) return;
-            SetBusy(true, "Scanning USB…");
+            if (importing || source == null) return;
+            cts?.Cancel();
+            var myCts = cts = new CancellationTokenSource();
+            SetBusy(true, false, "Scanning USB…");
             Files.ItemsSource = null;
-            cts = new CancellationTokenSource();
+            var progress = new Progress<string>(where => { if (cts == myCts) StatusLine.Text = "Scanning USB: " + where; });
             try
             {
-                var result = await source.ScanAsync(cts.Token);
+                var result = await source.ScanAsync(myCts.Token, progress);
+                if (cts != myCts) return; // superseded by a newer scan
                 Files.ItemsSource = result.Candidates;
                 VolumesLine.Text = result.Volumes.Count == 0 ? "" : "Drives: " + string.Join(", ", result.Volumes);
                 int ready = result.Candidates.Count(c => c.Importable);
@@ -61,10 +65,12 @@ namespace NesXbox.Views
                                        (result.Truncated ? " (list truncated)" : "") +
                                        (result.Error != RomSourceError.None ? " — " + result.Message : "");
                 foreach (var c in result.Candidates.Where(c => c.Importable)) Files.SelectedItems.Add(c);
+                // Put the controller where the next action is.
+                (ready > 0 ? ImportSelectedButton : RescanButton).Focus(FocusState.Keyboard);
             }
-            catch (OperationCanceledException) { StatusLine.Text = "Scan cancelled."; }
+            catch (OperationCanceledException) { if (cts == myCts) StatusLine.Text = "Scan cancelled."; }
             catch (Exception ex) { StatusLine.Text = "Cannot access USB: " + ex.Message; }
-            finally { SetBusy(false, null); }
+            finally { if (cts == myCts) SetBusy(false, false, null); }
         }
 
         async void ImportSelected_Click(object sender, RoutedEventArgs e) =>
@@ -78,8 +84,9 @@ namespace NesXbox.Views
         async Task ImportAsync(List<RomCandidate> items)
         {
             items = items.Where(c => c.Importable).ToList();
-            if (busy || items.Count == 0) { StatusLine.Text = "Nothing to import: select files marked Ready."; return; }
-            SetBusy(true, $"Importing 1/{items.Count}");
+            if (importing || items.Count == 0) { StatusLine.Text = "Nothing to import: select files marked Ready."; return; }
+            cts?.Cancel();
+            SetBusy(true, true, $"Importing 1/{items.Count}");
             cts = new CancellationTokenSource();
             var progress = new Progress<BatchProgress>(p =>
             {
@@ -95,17 +102,19 @@ namespace NesXbox.Views
                 StatusLine.Text = $"Imported {added}, already in library {dup}, failed {failed.Count}." +
                                   (failed.Count > 0 ? " " + string.Join("; ", failed.Take(3).Select(f => f.Candidate.FileName + ": " + f.Result.Message)) : "");
             }
-            finally { SetBusy(false, null); }
+            finally { SetBusy(false, false, null); ImportSelectedButton.Focus(FocusState.Keyboard); }
         }
 
-        void SetBusy(bool on, string status)
+        void SetBusy(bool on, bool import, string status)
         {
-            busy = on;
+            importing = on && import;
             if (status != null) StatusLine.Text = status;
             Progress.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
-            Progress.IsIndeterminate = on && status != null && status.StartsWith("Scanning");
+            Progress.IsIndeterminate = on && !import;
             CancelButton.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
-            RescanButton.IsEnabled = ImportAllButton.IsEnabled = ImportSelectedButton.IsEnabled = !on;
+            // Only an import locks the buttons; a scan can always be restarted with Rescan.
+            ImportAllButton.IsEnabled = ImportSelectedButton.IsEnabled = !on;
+            RescanButton.IsEnabled = !importing;
         }
     }
 }

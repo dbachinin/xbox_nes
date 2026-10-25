@@ -36,6 +36,7 @@ namespace NesXbox.Logic.Tests
                 ("usb_no_drive_and_empty_drive", UsbNoDriveAndEmpty),
                 ("usb_scan_layout_and_limits", UsbScanLayout),
                 ("usb_import_one_then_unplug_still_listed", UsbImportOneThenUnplug),
+                ("usb_hung_device_times_out", UsbHungDevice),
                 ("usb_permission_failure", UsbPermissionFailure),
                 ("usb_unplug_mid_copy", UsbUnplugMidCopy),
                 ("usb_directory_folder", UsbDirectoryFolder),
@@ -356,6 +357,28 @@ namespace NesXbox.Logic.Tests
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             await Assert.Throws<OperationCanceledException>(() => Scanner(v).ScanAsync(cts.Token));
+        }
+
+        static async Task UsbHungDevice()
+        {
+            var v = new FakeFolder("E:");
+            v.File("ok.nes", Roms.Make(1));
+            v.Folder("NES").Hang = true;
+            var seen = new List<string>();
+            var scanner = new RomScanner(() => Task.FromResult<IReadOnlyList<IScanFolder>>(new[] { v }),
+                                         new ScanOptions { Timeout = TimeSpan.FromMilliseconds(300) });
+            var sw = Stopwatch.StartNew();
+            var r = await scanner.ScanAsync(default, new SyncProgress<string>(seen.Add));
+            Assert.True(sw.ElapsedMilliseconds < 3000, "returns instead of hanging");
+            Assert.Equal(RomSourceError.Failed, r.Error);
+            Assert.True(r.Message.Contains("timed out") && r.Message.Contains("/E:/NES"), r.Message);
+            Assert.Equal(1, r.Candidates.Count);            // what was found before the hang is kept
+            Assert.True(seen.Contains("/E:/NES"));
+
+            // User cancel also works while a device call hangs.
+            using var cts = new CancellationTokenSource(200);
+            await Assert.Throws<OperationCanceledException>(() => new RomScanner(
+                () => new TaskCompletionSource<IReadOnlyList<IScanFolder>>().Task).ScanAsync(cts.Token));
         }
 
         static async Task UsbImportOneThenUnplug()

@@ -12,10 +12,10 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <Button x:Name="RescanButton" Content="Rescan" Style="{StaticResource BigButton}" Click="Rescan_Click" />
-            <Button x:Name="ImportSelectedButton" Content="Import selected" Style="{StaticResource BigButton}" Click="ImportSelected_Click" />
-            <Button x:Name="ImportAllButton" Content="Import all ready" Style="{StaticResource BigButton}" Click="ImportAll_Click" />
-            <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource BigButton}" Click="Cancel_Click" Visibility="Collapsed" />
+            <Button x:Name="RescanButton" XYFocusDown="{x:Bind Files}" Content="Rescan" Style="{StaticResource BigButton}" Click="Rescan_Click" />
+            <Button x:Name="ImportSelectedButton" XYFocusDown="{x:Bind Files}" Content="Import selected" Style="{StaticResource BigButton}" Click="ImportSelected_Click" />
+            <Button x:Name="ImportAllButton" XYFocusDown="{x:Bind Files}" Content="Import all ready" Style="{StaticResource BigButton}" Click="ImportAll_Click" />
+            <Button x:Name="CancelButton" XYFocusDown="{x:Bind Files}" Content="Cancel" Style="{StaticResource BigButton}" Click="Cancel_Click" Visibility="Collapsed" />
         </StackPanel>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,8">
@@ -24,7 +24,7 @@
             <ProgressBar x:Name="Progress" Height="6" Margin="0,6,0,0" Visibility="Collapsed" />
         </StackPanel>
 
-        <ListView x:Name="Files" Grid.Row="2" SelectionMode="Multiple">
+        <ListView x:Name="Files" Grid.Row="2" SelectionMode="Multiple" XYFocusUp="{x:Bind ImportSelectedButton}">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="logic:RomCandidate">
                     <StackPanel Padding="4,6">

@@ -66,6 +66,7 @@ namespace NesXbox.Logic.Tests
         public List<IScanFile> Files { get; } = new List<IScanFile>();
         public List<FakeFolder> Folders { get; } = new List<FakeFolder>();
         public Exception ListError { get; set; }
+        public bool Hang { get; set; }   // device call that never completes
 
         public FakeFolder(string name, string parent = "") { Name = name; DisplayPath = parent + "/" + name; }
 
@@ -73,6 +74,7 @@ namespace NesXbox.Logic.Tests
         public FakeFile File(string name, byte[] data) { var f = new FakeFile(name, DisplayPath + "/" + name, data); Files.Add(f); return f; }
 
         public Task<IReadOnlyList<IScanFile>> GetFilesAsync() =>
+            Hang ? new TaskCompletionSource<IReadOnlyList<IScanFile>>().Task :
             ListError != null ? Task.FromException<IReadOnlyList<IScanFile>>(ListError) : Task.FromResult<IReadOnlyList<IScanFile>>(Files.ToList());
 
         public Task<IReadOnlyList<IScanFolder>> GetFoldersAsync() => Task.FromResult<IReadOnlyList<IScanFolder>>(Folders.Cast<IScanFolder>().ToList());
