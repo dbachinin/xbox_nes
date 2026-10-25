@@ -1,5 +1,5 @@
 add_executable(unit_tests unit/unit_tests.cpp)
-target_link_libraries(unit_tests PRIVATE nes_core nescore)
+target_link_libraries(unit_tests PRIVATE nes_core)
 
 foreach(t
     cart_valid_nrom cart_chr_ram_trainer cart_errors cart_nes2_diskdude
@@ -7,9 +7,14 @@ foreach(t
     cpu_interrupts cpu_unofficial_jam
     mapper_nrom mapper_uxrom_cnrom mapper_mmc1 mapper_mmc3_irq
     machine_renders_test_rom machine_input_moves_sprite machine_nmi_per_frame machine_frame_cycles machine_random_prg_no_crash
-    apu_length_samples c_api_round_trip)
+    apu_length_samples)
   add_test(NAME unit.${t} COMMAND unit_tests ${t})
 endforeach()
+
+add_executable(c_api_tests unit/c_api_tests.cpp)
+target_link_libraries(c_api_tests PRIVATE nescore)
+target_include_directories(c_api_tests PRIVATE ${CMAKE_SOURCE_DIR}/core/include)
+add_test(NAME unit.c_api_round_trip COMMAND c_api_tests c_api_round_trip)
 
 # Downloaded diagnostic ROMs (scripts/fetch-test-roms.sh). Missing fixtures => SKIPPED, not passed.
 set(NES_FIXTURES "${CMAKE_SOURCE_DIR}/tests/fixtures/roms" CACHE PATH "Directory with downloaded test ROMs")

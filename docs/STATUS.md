@@ -13,11 +13,11 @@ The repository was empty: no `nes-xbox-starter` skeleton existed (only AGENTS.md
 
 | Area | Ubuntu | Windows/CI | Physical Xbox |
 |---|---|---|---|
-| Core emulator (CPU/PPU/APU, mappers 0/1/2/3/4/7) | ✅ verified (tests below) | UNVERIFIED (MSVC build) | NO |
+| Core emulator (CPU/PPU/APU, mappers 0/1/2/3/4/7) | ✅ verified (tests below) | ✅ compiles (MSVC v143, AppContainer DLL) | NO |
 | C ABI + P/Invoke wrapper | ✅ verified (C# → libnescore.so) | UNVERIFIED | NO |
 | Library, import pipeline, USB scanner logic, catalog, downloads, LAN receiver | ✅ verified (27 managed tests + live probe) | UNVERIFIED | NO |
-| UWP app (XAML, USB via RemovableDevices, gamepad, audio, game loop) | Type-checked only | UNVERIFIED | NO |
-| Package/manifest/signing | n/a | UNVERIFIED (workflow written, never run) | NO |
+| UWP app (XAML, USB via RemovableDevices, gamepad, audio, game loop) | Type-checked only | ✅ compiles (XAML + C#, Release / .NET Native) | NO |
+| Package/manifest/signing | n/a | ✅ x64 sideload package produced, throwaway self-signed cert (CI run 40189991288) | NO |
 
 ## Ubuntu results (GCC 15.2, CMake 4.2, .NET 9.0.121)
 
@@ -76,9 +76,20 @@ The repository was empty: no `nes-xbox-starter` skeleton existed (only AGENTS.md
 - [x] APU (all five channels) in the core; audio output via AudioGraph written — sound on Xbox UNVERIFIED.
 - [x] Pause/resume/reset/quit, battery RAM save (on pause, quit, suspend, every 60 s) — logic written, UI UNVERIFIED.
 - [x] Cleanup/hot-plug/partial-file handling — Ubuntu verified at the logic level.
-- [ ] Signed sideload package + reproducible Windows build log — workflow/script written, **never run**.
+- [ ] Signed sideload package + reproducible Windows build log — CI produces a package signed with a throwaway
+      certificate (installable for Dev Mode testing, not a trusted signature); install on Xbox not yet done.
 
-## Windows build attempt — 2026-10-25: BLOCKED
+## Windows CI — 2026-10-25
+
+* First real run (after billing unlock) failed with one error: `CS0103 StorageDevice` (Windows.Devices.Portable is not
+  available to this UWP project; the Linux type-check projection had it). Fixed by `DeviceClass.PortableStorageDevice`.
+* Run 40189991288 on commit 1b8f8da: **windows-xbox-package succeeded**; artifact
+  `NesXbox-x64-sideload-UNTRUSTED-SIGNATURE` (28.5 MB) + binlog uploaded. Package contents not yet inspected or installed.
+* linux-core on the same commit: 7/8 jobs green; `asan, clang` failed with an ASan ODR report because `unit_tests`
+  linked both `nes_core` and `libnescore.so` (two copies of the core). Fixed by moving the C ABI test into its own
+  `c_api_tests` binary that links only the shared library.
+
+### Earlier attempt: BLOCKED
 
 * Commit `5fe44ce` pushed to `github.com/dbachinin/xbox_nes`; runs 40188435546 (`windows-xbox-package`) and
   40188435535 (`linux-core`) both "failed" in 2 s with 0 steps. Annotation: *"The job was not started because
@@ -99,6 +110,5 @@ The repository was empty: no `nes-xbox-starter` skeleton existed (only AGENTS.md
 
 ## Next actions for the owner
 
-1. Run the `windows-xbox-package` workflow (push to GitHub) or `scripts/build-xbox-package.ps1 -SelfSign`
-   on a Windows machine; fix any MSBuild/XAML compile errors it reports (the UWP project has never been built).
+1. Download artifact `NesXbox-x64-sideload-UNTRUSTED-SIGNATURE` from the latest green `windows-xbox-package` run.
 2. Install via Device Portal (DEPLOY_XBOX.md) and walk through TEST_PLAN.md H-1…H-14, recording results here.
