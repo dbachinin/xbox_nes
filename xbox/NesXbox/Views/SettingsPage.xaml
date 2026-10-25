@@ -11,7 +11,7 @@
             <Button Content="Clear catalog cache" Style="{StaticResource BigButton}" Click="ClearCache_Click" />
             <TextBlock x:Name="StorageText" Style="{StaticResource StatusText}" />
             <TextBlock Style="{StaticResource StatusText}" FontSize="16">
-                <Run Text="Controls in game: A = A, B = B, X = turbo A, Y = turbo B, Menu = Start, View = Select, D-pad / left stick = move." />
+                <Run Text="Controls in game (NES layout): Xbox A = NES B, Xbox B = NES A, X = turbo B, Y = turbo A, Menu = Start, View = Select, D-pad / left stick = move." />
                 <LineBreak />
                 <Run Text="RT opens the pause menu (Resume, Reset, Quit to library); LT opens the save-state menu (Save state, Load state). The same trigger or B returns to the game." />
                 <LineBreak />

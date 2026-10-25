@@ -72,6 +72,6 @@ Upload the `.msix` plus its `Dependencies\x64\*` packages through **Xbox Device 
   `scripts/lan-upload.py <address> <code> *.nes` from Ubuntu.
 * **Browse Homebrew**: Homebrew Hub NES catalog and curated GitHub releases. Download appears only for
   entries whose license permits redistribution; others show the official page.
-* In game: A = A, B = B, X = turbo A, Y = turbo B, Menu = Start, View = Select, D-pad/left stick. **RT** = pause menu, **LT** = save-state menu (one quick-save slot per game); the same trigger or B resumes.
+* In game (NES layout, B left of A): Xbox A = NES B, Xbox B = NES A, X = turbo B, Y = turbo A, Menu = Start, View = Select, D-pad/left stick. **RT** = pause menu, **LT** = save-state menu (one quick-save slot per game); the same trigger or B resumes.
 
 No commercial ROMs are included or offered. You may import games you lawfully own.

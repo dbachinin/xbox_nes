@@ -39,7 +39,7 @@ W-2 Package installs on a Windows PC with the device family temporarily set to `
 | H-6 | Insert a drive while the page is open | Automatic rescan |
 | H-7 | Play a mapper-0 game: A/B/D-pad/Start/Select | Correct input, ~60 FPS in overlay, no dropped frames |
 | H-8 | Audio | Clean sound, no persistent crackle (watch "audio underruns") |
-| H-9 | RT → Pause; RT or B resumes; Quit to library | Returns to the same selected card; B never pauses during play; X/Y fire turbo A/B; Xbox button behaves as usual |
+| H-9 | RT → Pause; RT or B resumes; Quit to library | Returns to the same selected card; B never pauses during play; Xbox A/B act as NES B/A, X/Y fire turbo B/A; Xbox button behaves as usual |
 | H-9b | LT → Save state; play on; LT → Load state; restart the app and Load state again | Game returns exactly to the saved moment, also after restart; "State saved/loaded" toast |
 | H-10 | Guide button / suspend during play, resume | Paused on return, battery save written |
 | H-11 | Browse Homebrew online | Listing appears; Cybercoaster downloadable, others "Official page only" |

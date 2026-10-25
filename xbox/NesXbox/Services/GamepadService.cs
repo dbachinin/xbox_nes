@@ -16,7 +16,8 @@ namespace NesXbox.Services
 
     /// <summary>
     /// Xbox controller -> NES pad mapping. Safe to poll from the emulation thread.
-    /// A=A, B=B, X=turbo A, Y=turbo B, Menu=Start, View=Select, D-pad or left stick = directions.
+    /// NES layout (B left of A): Xbox A=NES B, Xbox B=NES A, X=turbo B, Y=turbo A,
+    /// Menu=Start, View=Select, D-pad or left stick = directions.
     /// RT opens the pause menu, LT the save-state menu; the Xbox and Share buttons stay with the system.
     /// </summary>
     public sealed class GamepadService
@@ -66,8 +67,8 @@ namespace NesXbox.Services
         {
             var b = r.Buttons;
             NesButtons n = NesButtons.None;
-            if ((b & GamepadButtons.A) != 0 || ((b & GamepadButtons.X) != 0 && turboOn)) n |= NesButtons.A;
-            if ((b & GamepadButtons.B) != 0 || ((b & GamepadButtons.Y) != 0 && turboOn)) n |= NesButtons.B;
+            if ((b & GamepadButtons.B) != 0 || ((b & GamepadButtons.Y) != 0 && turboOn)) n |= NesButtons.A;
+            if ((b & GamepadButtons.A) != 0 || ((b & GamepadButtons.X) != 0 && turboOn)) n |= NesButtons.B;
             if ((b & GamepadButtons.Menu) != 0) n |= NesButtons.Start;
             if ((b & GamepadButtons.View) != 0) n |= NesButtons.Select;
             if ((b & GamepadButtons.DPadUp) != 0 || r.LeftThumbstickY > StickThreshold) n |= NesButtons.Up;
