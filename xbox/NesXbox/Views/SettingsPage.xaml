@@ -11,9 +11,9 @@
             <Button Content="Clear catalog cache" Style="{StaticResource BigButton}" Click="ClearCache_Click" />
             <TextBlock x:Name="StorageText" Style="{StaticResource StatusText}" />
             <TextBlock Style="{StaticResource StatusText}" FontSize="16">
-                <Run Text="Controls in game: A = A, B or X = B, Menu = Start, View = Select, D-pad / left stick = move." />
+                <Run Text="Controls in game: A = A, B = B, X = turbo A, Y = turbo B, Menu = Start, View = Select, D-pad / left stick = move." />
                 <LineBreak />
-                <Run Text="Press View + Menu together for the pause menu (Resume, Reset, Quit to library)." />
+                <Run Text="Press the Xbox button (or View + Menu together) for the pause menu: Resume, Reset, Quit to library." />
                 <LineBreak />
                 <LineBreak />
                 <Run Text="NES / Xbox is an independent emulator for Xbox Developer Mode. It ships no commercial games. Catalog entries keep their source and license; downloads are offered only where the license allows redistribution." />

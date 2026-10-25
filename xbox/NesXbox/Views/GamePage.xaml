@@ -20,7 +20,7 @@
                 <Button x:Name="ResumeButton" Content="Resume" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Resume_Click" />
                 <Button Content="Reset game" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Reset_Click" />
                 <Button Content="Quit to library" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Quit_Click" />
-                <TextBlock Text="In game: View + Menu opens this menu" FontSize="16" Opacity="0.6" HorizontalAlignment="Center" />
+                <TextBlock Text="In game: Xbox button (or View + Menu) opens this menu. B or Resume returns." FontSize="16" Opacity="0.6" HorizontalAlignment="Center" />
             </StackPanel>
         </Grid>
     </Grid>

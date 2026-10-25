@@ -72,6 +72,6 @@ Upload the `.msix` plus its `Dependencies\x64\*` packages through **Xbox Device 
   `scripts/lan-upload.py <address> <code> *.nes` from Ubuntu.
 * **Browse Homebrew**: Homebrew Hub NES catalog and curated GitHub releases. Download appears only for
   entries whose license permits redistribution; others show the official page.
-* In game: A, B (or X), Menu = Start, View = Select, D-pad/left stick. **View + Menu** = pause menu.
+* In game: A = A, B = B, X = turbo A, Y = turbo B, Menu = Start, View = Select, D-pad/left stick. **Xbox button** (or View + Menu) = pause menu.
 
 No commercial ROMs are included or offered. You may import games you lawfully own.

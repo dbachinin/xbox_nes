@@ -39,6 +39,7 @@ namespace NesXbox.Views
             base.OnNavigatedTo(e);
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             KeyDown += OnKeyDown;
+            Window.Current.Activated += OnWindowActivated;
             AppServices.Suspending += OnSuspending;
             AppServices.Resumed += OnResumed;
 
@@ -82,6 +83,7 @@ namespace NesXbox.Views
         {
             SystemNavigationManager.GetForCurrentView().BackRequested -= OnBackRequested;
             KeyDown -= OnKeyDown;
+            Window.Current.Activated -= OnWindowActivated;
             AppServices.Suspending -= OnSuspending;
             AppServices.Resumed -= OnResumed;
             StopSession();
@@ -133,11 +135,20 @@ namespace NesXbox.Views
             if (session != null && !session.Paused && e.Key >= VirtualKey.GamepadA && e.Key <= VirtualKey.GamepadRightThumbstickLeft) e.Handled = true;
         }
 
+        // On Xbox the gamepad B also raises BackRequested. While playing, B belongs to the game.
         void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
             e.Handled = true;
             if (session == null) { Quit(); return; }
-            if (session.Paused) Resume(); else ShowPause();
+            if (session.Paused) Resume();
+        }
+
+        // The Guide (center) button is reserved by the system and never reaches the app; pressing it
+        // deactivates our window, so that is the signal to pause.
+        void OnWindowActivated(object sender, WindowActivatedEventArgs e)
+        {
+            if (e.WindowActivationState == CoreWindowActivationState.Deactivated && session != null && !session.Paused)
+                ShowPause();
         }
 
         void ShowPause()

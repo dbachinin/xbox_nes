@@ -15,12 +15,15 @@ namespace NesXbox.Services
 
     /// <summary>
     /// Xbox controller -> NES pad mapping. Safe to poll from the emulation thread.
-    /// A=A, B/X=B, Menu=Start, View=Select, D-pad or left stick = directions; View+Menu opens the pause menu.
+    /// A=A, B=B, X=turbo A, Y=turbo B, Menu=Start, View=Select, D-pad or left stick = directions.
+    /// Pause: the Xbox button (handled as window deactivation in GamePage) or the View+Menu chord.
     /// </summary>
     public sealed class GamepadService
     {
         const double StickThreshold = 0.5;
+        const int TurboHalfPeriod = 2;   // frames on / frames off: 15 presses per second at 60 Hz
         bool pauseChordHeld;
+        int pollCount;
 
         public event Action ConnectionChanged;
 
@@ -36,26 +39,27 @@ namespace NesXbox.Services
         {
             var pads = Gamepad.Gamepads.ToList(); // snapshot: the list changes on hot-plug
             var state = new PadState { Connected = pads.Count };
+            bool turboOn = (pollCount++ / TurboHalfPeriod) % 2 == 0; // Poll runs once per emulated frame
             if (pads.Count > 0)
             {
                 var r = pads[0].GetCurrentReading();
                 bool chord = (r.Buttons & GamepadButtons.View) != 0 && (r.Buttons & GamepadButtons.Menu) != 0;
                 state.PausePressed = chord && !pauseChordHeld;
                 pauseChordHeld = chord;
-                state.Player1 = Map(r);
+                state.Player1 = Map(r, turboOn);
                 if (chord) state.Player1 &= ~(NesButtons.Start | NesButtons.Select);
             }
             else pauseChordHeld = false;
-            if (pads.Count > 1) state.Player2 = Map(pads[1].GetCurrentReading());
+            if (pads.Count > 1) state.Player2 = Map(pads[1].GetCurrentReading(), turboOn);
             return state;
         }
 
-        public static NesButtons Map(GamepadReading r)
+        public static NesButtons Map(GamepadReading r, bool turboOn)
         {
             var b = r.Buttons;
             NesButtons n = NesButtons.None;
-            if ((b & GamepadButtons.A) != 0) n |= NesButtons.A;
-            if ((b & (GamepadButtons.B | GamepadButtons.X)) != 0) n |= NesButtons.B;
+            if ((b & GamepadButtons.A) != 0 || ((b & GamepadButtons.X) != 0 && turboOn)) n |= NesButtons.A;
+            if ((b & GamepadButtons.B) != 0 || ((b & GamepadButtons.Y) != 0 && turboOn)) n |= NesButtons.B;
             if ((b & GamepadButtons.Menu) != 0) n |= NesButtons.Start;
             if ((b & GamepadButtons.View) != 0) n |= NesButtons.Select;
             if ((b & GamepadButtons.DPadUp) != 0 || r.LeftThumbstickY > StickThreshold) n |= NesButtons.Up;
