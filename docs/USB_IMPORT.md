@@ -18,7 +18,7 @@
   `library.json` atomically. Duplicates (same SHA-256 from USB, LAN or catalog) are stored once.
 * Files are opened **read-only**; nothing writes to the drive. Pulling the drive mid-copy yields
   `Drive disconnected` for that file, removes the partial temp file and leaves the library unchanged.
-* Hot-plug: a `DeviceWatcher` on `StorageDevice.GetDeviceSelector()` triggers a rescan when a drive is
+* Hot-plug: a `DeviceWatcher` on `DeviceClass.PortableStorageDevice` triggers a rescan when a drive is
   inserted or removed while the page is open; **Rescan** is always available.
 * Opening a `.nes` file with the app (file activation) imports it through the same pipeline.
 

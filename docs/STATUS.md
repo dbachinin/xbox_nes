@@ -78,6 +78,16 @@ The repository was empty: no `nes-xbox-starter` skeleton existed (only AGENTS.md
 - [x] Cleanup/hot-plug/partial-file handling — Ubuntu verified at the logic level.
 - [ ] Signed sideload package + reproducible Windows build log — workflow/script written, **never run**.
 
+## Windows build attempt — 2026-10-25: BLOCKED
+
+* Commit `5fe44ce` pushed to `github.com/dbachinin/xbox_nes`; runs 40188435546 (`windows-xbox-package`) and
+  40188435535 (`linux-core`) both "failed" in 2 s with 0 steps. Annotation: *"The job was not started because
+  your account is locked due to a billing issue."* No code was compiled; this says nothing about the project.
+* No local alternative: no Windows VM, 2.7 GB free on /home (a Windows + VS 2022 VM needs ~60 GB); Wine cannot
+  run the UWP/MSBuild/.NET Native toolchain.
+* Next action: unlock GitHub billing and re-run the workflow, or run `scripts/build-xbox-package.ps1 -SelfSign`
+  on any Windows 10/11 machine with VS 2022 + UWP workload.
+
 ## Known limitations
 
 * PAL timing not emulated (PAL ROMs run at NTSC speed). Mappers beyond 0/1/2/3/4/7 are rejected at import.

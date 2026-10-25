@@ -48,7 +48,14 @@ if (-not $Unsigned) {
 
 & $msbuild $sln /restore /m /p:Configuration=$Configuration /p:Platform=x64 `
   /p:AppxBundle=Never /p:UapAppxPackageBuildMode=SideloadOnly `
-  "/p:AppxPackageDir=$root\out\AppPackages\" @signArgs /bl:"$root\out\msbuild.binlog"
-if ($LASTEXITCODE -ne 0) { throw "MSBuild failed ($LASTEXITCODE). See out\msbuild.binlog." }
+  "/p:AppxPackageDir=$root\out\AppPackages\" @signArgs /bl:"$root\out\msbuild.binlog" `
+  /clp:Summary "/flp1:errorsonly;logfile=$root\out\errors.log"
+if ($LASTEXITCODE -ne 0) {
+  # Surface errors as CI annotations (readable without downloading the full log).
+  if ($env:GITHUB_ACTIONS -and (Test-Path "$root\out\errors.log")) {
+    Get-Content "$root\out\errors.log" | Select-Object -Unique -First 50 | ForEach-Object { Write-Host "::error::$_" }
+  }
+  throw "MSBuild failed ($LASTEXITCODE). See out\errors.log and out\msbuild.binlog."
+}
 if ($SelfSign -and $PfxPath) { Remove-Item $PfxPath -Force }
 Get-ChildItem "$root\out\AppPackages" -Recurse -Include *.msix, *.appx | ForEach-Object { Write-Host "package: $($_.FullName)" }

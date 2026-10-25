@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using NesXbox.Logic;
 using Windows.Devices.Enumeration;
-using Windows.Devices.Portable;
 using Windows.Storage;
 
 namespace NesXbox.Services
@@ -25,7 +24,7 @@ namespace NesXbox.Services
 
         public UsbRomSource()
         {
-            watcher = DeviceInformation.CreateWatcher(StorageDevice.GetDeviceSelector());
+            watcher = DeviceInformation.CreateWatcher(DeviceClass.PortableStorageDevice);
             bool enumerated = false;
             watcher.EnumerationCompleted += (s, e) => enumerated = true;
             watcher.Added += (s, e) => { if (enumerated) DevicesChanged?.Invoke(); };
