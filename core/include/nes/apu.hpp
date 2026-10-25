@@ -1,5 +1,7 @@
 #pragma once
 
+#include "nes/state.hpp"
+
 #include <cstdint>
 #include <functional>
 #include <vector>
@@ -19,6 +21,7 @@ public:
     void writeRegister(std::uint16_t addr, std::uint8_t v);
     std::uint8_t readStatus();                         // $4015
     bool irq() const { return frameIrq_ || dmc_.irq; }
+    void state(StateIO& io);
 
     std::vector<std::int16_t>& samples() { return samples_; }
     const std::vector<std::int16_t>& samples() const { return samples_; }

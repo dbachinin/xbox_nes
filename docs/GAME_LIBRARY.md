@@ -10,6 +10,7 @@ LocalState/
   Games/<sha256>.nes    ROM bytes (source of truth for existence)
   Covers/<sha256>.png   cover/screenshot, only when the source's license allows it
   Saves/<sha256>.sav    battery-backed PRG RAM (kept when a game is deleted)
+  States/<sha256>.state quick-save slot (LT menu); versioned, refused if from another game/version
   Temp/                 in-flight imports; cleared on start
   CatalogCache/         last catalog pages (offline display, time-stamped)
 ```

@@ -287,11 +287,17 @@ namespace NesXbox.Logic.Tests
             var png = new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G', 13, 10, 26, 10, 0, 0 };
             Assert.True(await lib.SetCoverAsync(g.Id, png));
             lib.WriteSave(g, new byte[] { 1, 2, 3 });
+            Assert.Equal(null, lib.ReadState(g));
+            lib.WriteState(g, new byte[] { 9, 9 });
+            lib.WriteState(g, new byte[] { 7, 7, 7 });   // overwrite the slot
+            Assert.True(lib.StateSavedAtUtc(g).HasValue);
             lib = await Open(t.Path);
             var e = lib.Find(g.Id);
             Assert.Equal("Covers/" + g.Sha256 + ".png", e.CoverPath);
             Assert.True(File.Exists(lib.GetCoverPath(e)));
             Assert.Equal(3, lib.ReadSave(e).Length);
+            Assert.Equal(3, lib.ReadState(e).Length);
+            Assert.Equal(0, FileCount(t.Path, "Temp"));
             await lib.DeleteAsync(e.Id);
             Assert.True(!File.Exists(Path.Combine(t.Path, "Covers", g.Sha256 + ".png")));
             Assert.True(File.Exists(Path.Combine(t.Path, "Saves", g.Sha256 + ".sav")), "saves survive deletion");

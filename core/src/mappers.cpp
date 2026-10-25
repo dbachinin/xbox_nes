@@ -86,6 +86,8 @@ private:
         return chrByte(chr0_ >> 1, 8192, addr & 0x1FFF);
     }
 
+    void state(StateIO& io) override { Mapper::state(io); io(shift_); io(control_); io(chr0_); io(chr1_); io(prg_); io(lastWrite_); }
+
     std::uint8_t shift_ = 0x10, control_ = 0x0C, chr0_ = 0, chr1_ = 0, prg_ = 0;
     std::uint64_t lastWrite_ = ~0ull - 1;
 };
@@ -101,6 +103,8 @@ public:
     void cpuWrite(std::uint16_t addr, std::uint8_t v, std::uint64_t c) override {
         if (addr >= 0x8000) bank_ = v; else Mapper::cpuWrite(addr, v, c);
     }
+public:
+    void state(StateIO& io) override { Mapper::state(io); io(bank_); }
 private:
     std::uint8_t bank_ = 0;
 };
@@ -113,6 +117,8 @@ public:
     }
     std::uint8_t ppuRead(std::uint16_t addr) override { return chrByte(bank_, 8192, addr & 0x1FFF); }
     void ppuWrite(std::uint16_t addr, std::uint8_t v) override { if (cart_.chrIsRam) chrByte(bank_, 8192, addr & 0x1FFF) = v; }
+public:
+    void state(StateIO& io) override { Mapper::state(io); io(bank_); }
 private:
     std::uint8_t bank_ = 0;
 };
@@ -126,6 +132,8 @@ public:
     }
     void cpuWrite(std::uint16_t addr, std::uint8_t v, std::uint64_t) override { if (addr >= 0x8000) reg_ = v; }
     Mirroring mirroring() const override { return (reg_ & 0x10) ? Mirroring::SingleHigh : Mirroring::SingleLow; }
+public:
+    void state(StateIO& io) override { Mapper::state(io); io(reg_); }
 private:
     std::uint8_t reg_ = 0;
 };
@@ -184,6 +192,13 @@ private:
         return chrByte(regs_[2 + ((a - 0x1000) >> 10)], 1024, a & 0x03FF);
     }
 
+public:
+    void state(StateIO& io) override {
+        Mapper::state(io);
+        io(regs_); io(select_); io(latch_); io(counter_); io(mirrorH_); io(reload_); io(enabled_); io(pending_);
+    }
+
+private:
     std::uint8_t regs_[8] = {0, 2, 4, 5, 6, 7, 0, 1};
     std::uint8_t select_ = 0, latch_ = 0, counter_ = 0;
     bool mirrorH_ = false, reload_ = false, enabled_ = false, pending_ = false;

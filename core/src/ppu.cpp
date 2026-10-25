@@ -24,6 +24,17 @@ std::uint8_t reverseBits(std::uint8_t b) {
 
 } // namespace
 
+void Ppu::state(StateIO& io) {
+    // The framebuffer is not saved: the next emulated frame redraws it.
+    io(vram_); io(palette_); io(oam_);
+    io(ctrl_); io(mask_); io(status_); io(oamAddr_); io(readBuffer_); io(openBus_);
+    io(v_); io(t_); io(fineX_); io(w_);
+    io(scanline_); io(dot_); io(oddFrame_); io(frameComplete_);
+    io(ntByte_); io(atByte_); io(patLo_); io(patHi_);
+    io(shiftPatLo_); io(shiftPatHi_); io(shiftAtLo_); io(shiftAtHi_);
+    io(sprites_); io(spriteCount_);
+}
+
 void Ppu::reset() {
     ctrl_ = mask_ = status_ = oamAddr_ = 0;
     readBuffer_ = openBus_ = 0;

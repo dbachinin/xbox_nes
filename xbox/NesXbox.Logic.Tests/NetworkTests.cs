@@ -406,6 +406,17 @@ namespace NesXbox.Logic.Tests
                 other.LoadRom(Roms.Make(1, battery: true));
                 for (int i = 0; i < 3; i++) other.RunFrame();
                 Assert.Equal(h1, other.FrameHash());
+
+                // Save state through P/Invoke: restore -> identical future frames; junk is refused.
+                var st = core.SaveState();
+                Assert.True(st.Length > 2048);
+                for (int i = 0; i < 5; i++) core.RunFrame();
+                ulong after = core.FrameHash();
+                Assert.True(core.LoadState(st));
+                for (int i = 0; i < 5; i++) core.RunFrame();
+                Assert.Equal(after, core.FrameHash());
+                Assert.True(!core.LoadState(new byte[] { 1, 2, 3 }) && !core.LoadState(null));
+                Assert.True(!other.LoadState(Encoding.ASCII.GetBytes("NXST garbage")));
             }
             return Task.CompletedTask;
         }

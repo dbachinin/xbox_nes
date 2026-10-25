@@ -22,6 +22,8 @@ namespace NesXbox.Logic
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] static extern long nes_copy_frame(IntPtr m, byte[] dst, UIntPtr size, int scale);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] static extern ulong nes_frame_hash(IntPtr m);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] static extern UIntPtr nes_read_audio(IntPtr m, short[] dst, UIntPtr max);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] static extern UIntPtr nes_save_state(IntPtr m, byte[] dst, UIntPtr size);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] static extern int nes_load_state(IntPtr m, byte[] src, UIntPtr size);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] static extern UIntPtr nes_battery_size(IntPtr m);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] static extern UIntPtr nes_battery_read(IntPtr m, byte[] dst, UIntPtr size);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)] static extern UIntPtr nes_battery_write(IntPtr m, byte[] src, UIntPtr size);
@@ -58,6 +60,18 @@ namespace NesXbox.Logic
         public bool CopyFrame(byte[] dst, int scale) => nes_copy_frame(Handle, dst, (UIntPtr)dst.Length, scale) > 0;
 
         public int ReadAudio(short[] dst) => (int)nes_read_audio(Handle, dst, (UIntPtr)dst.Length);
+
+        /// <summary>Snapshot of the whole machine (versioned, cartridge-specific).</summary>
+        public byte[] SaveState()
+        {
+            int n = (int)nes_save_state(Handle, null, UIntPtr.Zero);
+            var b = new byte[n];
+            nes_save_state(Handle, b, (UIntPtr)n);
+            return b;
+        }
+
+        /// <summary>False if the state is corrupt or from another game/version; the machine is then unchanged.</summary>
+        public bool LoadState(byte[] state) => state != null && state.Length > 0 && nes_load_state(Handle, state, (UIntPtr)state.Length) == 0;
 
         public byte[] ReadBattery()
         {

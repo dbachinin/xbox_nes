@@ -44,6 +44,12 @@ std::uint8_t Apu::Pulse::output() const {
     return env.output();
 }
 
+void Apu::state(StateIO& io) {
+    io(p1_); io(p2_); io(tri_); io(noise_); io(dmc_);
+    io(frameCycle_); io(fiveStep_); io(irqInhibit_); io(frameIrq_); io(oddCycle_); io(resetDelay_);
+    io(sampleAcc_); io(sampleSum_); io(sampleCount_); io(hpPrevIn_); io(hpPrevOut_);
+}
+
 void Apu::reset() {
     p1_ = Pulse{};
     p1_.ones = true;

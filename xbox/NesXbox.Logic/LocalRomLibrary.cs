@@ -86,7 +86,7 @@ namespace NesXbox.Logic
         public LocalRomLibrary(string rootPath)
         {
             root = rootPath;
-            foreach (var d in new[] { "Games", "Covers", "Saves", "Temp" }) Directory.CreateDirectory(Path.Combine(root, d));
+            foreach (var d in new[] { "Games", "Covers", "Saves", "States", "Temp" }) Directory.CreateDirectory(Path.Combine(root, d));
         }
 
         /// <summary>Raised (on a worker thread) after any change to the game list or an entry.</summary>
@@ -98,6 +98,7 @@ namespace NesXbox.Logic
 
         public string GetRomPath(GameEntry g) => Path.Combine(root, "Games", g.Sha256 + ".nes");
         public string GetSavePath(GameEntry g) => Path.Combine(root, "Saves", g.Sha256 + ".sav");
+        public string GetStatePath(GameEntry g) => Path.Combine(root, "States", g.Sha256 + ".state");
         public string GetCoverPath(GameEntry g) => string.IsNullOrEmpty(g.CoverPath) ? null : Path.Combine(root, g.CoverPath);
         public GameEntry Find(string id) => games.FirstOrDefault(g => g.Id == id);
 
@@ -448,11 +449,28 @@ namespace NesXbox.Logic
             return File.Exists(p) ? File.ReadAllBytes(p) : null;
         }
 
-        public void WriteSave(GameEntry g, byte[] data)
+        public void WriteSave(GameEntry g, byte[] data) => WriteAtomic(GetSavePath(g), data);
+
+        /// <summary>One quick-save slot per game (States/&lt;sha256&gt;.state).</summary>
+        public void WriteState(GameEntry g, byte[] data) => WriteAtomic(GetStatePath(g), data);
+
+        public byte[] ReadState(GameEntry g)
         {
-            string tmp = Path.Combine(root, "Temp", Guid.NewGuid().ToString("N") + ".sav");
+            string p = GetStatePath(g);
+            return File.Exists(p) ? File.ReadAllBytes(p) : null;
+        }
+
+        public DateTime? StateSavedAtUtc(GameEntry g)
+        {
+            string p = GetStatePath(g);
+            return File.Exists(p) ? File.GetLastWriteTimeUtc(p) : (DateTime?)null;
+        }
+
+        void WriteAtomic(string path, byte[] data)
+        {
+            string tmp = Path.Combine(root, "Temp", Guid.NewGuid().ToString("N") + ".tmp");
             File.WriteAllBytes(tmp, data);
-            ReplaceFile(tmp, GetSavePath(g));
+            ReplaceFile(tmp, path);
         }
     }
 }

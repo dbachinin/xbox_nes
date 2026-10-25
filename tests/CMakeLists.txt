@@ -6,7 +6,7 @@ foreach(t
     cpu_load_store_flags cpu_adc_sbc_no_decimal cpu_cycle_counts cpu_jmp_indirect_bug
     cpu_interrupts cpu_unofficial_jam
     mapper_nrom mapper_uxrom_cnrom mapper_mmc1 mapper_mmc3_irq
-    machine_renders_test_rom machine_input_moves_sprite machine_nmi_per_frame machine_frame_cycles machine_random_prg_no_crash
+    machine_renders_test_rom machine_input_moves_sprite machine_nmi_per_frame machine_frame_cycles machine_random_prg_no_crash machine_save_state
     apu_length_samples)
   add_test(NAME unit.${t} COMMAND unit_tests ${t})
 endforeach()

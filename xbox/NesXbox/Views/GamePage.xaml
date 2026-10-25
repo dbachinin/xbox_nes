@@ -20,8 +20,22 @@
                 <Button x:Name="ResumeButton" Content="Resume" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Resume_Click" />
                 <Button Content="Reset game" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Reset_Click" />
                 <Button Content="Quit to library" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Quit_Click" />
-                <TextBlock Text="In game: Xbox button (or View + Menu) opens this menu. B or Resume returns." FontSize="16" Opacity="0.6" HorizontalAlignment="Center" />
+                <TextBlock Text="RT opens and closes this menu. B also returns to the game." FontSize="16" Opacity="0.6" HorizontalAlignment="Center" />
             </StackPanel>
         </Grid>
+
+        <Grid x:Name="StateOverlay" Background="#CC000000" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16" Width="380">
+                <TextBlock Text="Save state" FontSize="40" FontWeight="Bold" HorizontalAlignment="Center" />
+                <TextBlock x:Name="StateInfo" FontSize="18" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+                <Button x:Name="SaveStateButton" Content="Save state" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="SaveState_Click" />
+                <Button x:Name="LoadStateButton" Content="Load state" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="LoadState_Click" />
+                <Button Content="Back to game" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Resume_Click" />
+                <TextBlock Text="LT opens and closes this menu. One slot per game." FontSize="16" Opacity="0.6" HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock x:Name="Toast" FontSize="22" Foreground="White" FontWeight="SemiBold" Margin="24" Padding="16,8" HorizontalAlignment="Right"
+                   VerticalAlignment="Top" Visibility="Collapsed" />
     </Grid>
 </Page>

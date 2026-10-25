@@ -2,6 +2,7 @@
 
 #include "nes/frame.hpp"
 #include "nes/mapper.hpp"
+#include "nes/state.hpp"
 
 #include <array>
 #include <cstdint>
@@ -23,6 +24,8 @@ public:
     bool frameComplete() const { return frameComplete_; }
     void clearFrameComplete() { frameComplete_ = false; }
     const Frame& frame() const { return frame_; }
+
+    void state(StateIO& io);
 
     int scanline() const { return scanline_; }
     int dot() const { return dot_; }

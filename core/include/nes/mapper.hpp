@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nes/cartridge.hpp"
+#include "nes/state.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -25,6 +26,8 @@ public:
     virtual bool irq() const { return false; }
     // Called once per rendered scanline (dot 260) while rendering is enabled.
     virtual void scanline() {}
+    // Bank registers + writable memory. Overrides call the base first.
+    virtual void state(StateIO& io) { io(prgRam_); if (cart_.chrIsRam) io(cart_.chr); }
 
     std::span<std::uint8_t> prgRam() { return prgRam_; }
     const Cartridge& cart() const { return cart_; }

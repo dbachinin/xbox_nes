@@ -55,6 +55,18 @@ size_t nes_read_audio(nes_machine* m, int16_t* dst, size_t max_samples) {
     return n;
 }
 
+size_t nes_save_state(nes_machine* m, uint8_t* dst, size_t dst_size) {
+    if (!m) return 0;
+    auto s = m->machine.saveState();
+    if (dst && dst_size >= s.size()) std::memcpy(dst, s.data(), s.size());
+    return s.size();
+}
+
+int nes_load_state(nes_machine* m, const uint8_t* src, size_t size) {
+    if (!m || !src) return 1;
+    return m->machine.loadState({src, size}) ? 0 : 1;
+}
+
 size_t nes_battery_size(nes_machine* m) {
     return (m && m->machine.hasBattery()) ? m->machine.prgRam().size() : 0;
 }

@@ -23,6 +23,7 @@ namespace NesXbox.Services
         readonly AutoResetEvent vsync = new AutoResetEvent(false);
         readonly byte[][] buffers;
         readonly object swapLock = new object();
+        readonly object coreLock = new object();   // core is touched by the emulation thread and by save/load calls
         readonly short[] audioScratch = new short[2048];
         Thread thread;
         volatile bool running, paused;
@@ -39,8 +40,10 @@ namespace NesXbox.Services
         public long DroppedFrames { get; private set; }
         public long Underruns => audio?.Underruns ?? 0;
 
-        /// <summary>Raised on the emulation thread when the View+Menu chord is pressed.</summary>
+        /// <summary>Raised on the emulation thread when RT is pressed.</summary>
         public event Action PauseRequested;
+        /// <summary>Raised on the emulation thread when LT is pressed.</summary>
+        public event Action StateMenuRequested;
         /// <summary>Raised on the emulation thread if the core throws; the session stops.</summary>
         public event Action<Exception> Faulted;
 
@@ -99,10 +102,12 @@ namespace NesXbox.Services
                         next = now - FrameSeconds;
                     }
                     bool produced = false;
+                    lock (coreLock)
                     while (next <= now && running && !paused)
                     {
                         var input = pads.Poll();
                         if (input.PausePressed) { paused = true; PauseRequested?.Invoke(); break; }
+                        if (input.StateMenuPressed) { paused = true; StateMenuRequested?.Invoke(); break; }
                         core.SetButtons(0, (byte)input.Player1);
                         core.SetButtons(1, (byte)input.Player2);
                         coreTime.Restart();
@@ -116,7 +121,7 @@ namespace NesXbox.Services
                     }
                     if (produced)
                     {
-                        core.CopyFrame(buffers[writing], Scale);
+                        lock (coreLock) core.CopyFrame(buffers[writing], Scale);
                         lock (swapLock) { ready = writing; writing ^= 1; hasNewFrame = true; }
                     }
                     if (now - fpsWindowStart >= 1.0)
@@ -134,7 +139,9 @@ namespace NesXbox.Services
             }
         }
 
-        public byte[] ReadBattery() => core.ReadBattery();
+        public byte[] ReadBattery() { lock (coreLock) return core.ReadBattery(); }
+        public byte[] SaveState() { lock (coreLock) return core.SaveState(); }
+        public bool LoadState(byte[] state) { lock (coreLock) return core.LoadState(state); }
 
         public void Dispose()
         {

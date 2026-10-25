@@ -28,6 +28,7 @@ namespace NesXbox.Views
         Stream pixels;
         DateTime lastOverlay;
         DateTime lastBatterySave = DateTime.UtcNow;
+        DateTime pausedAt;
 
         public GamePage()
         {
@@ -39,7 +40,6 @@ namespace NesXbox.Views
             base.OnNavigatedTo(e);
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             KeyDown += OnKeyDown;
-            Window.Current.Activated += OnWindowActivated;
             AppServices.Suspending += OnSuspending;
             AppServices.Resumed += OnResumed;
 
@@ -65,6 +65,7 @@ namespace NesXbox.Views
             int scale = ChooseScale();
             session = new EmulationSession(core, scale, audio, AppServices.Gamepads);
             session.PauseRequested += () => { var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, ShowPause); };
+            session.StateMenuRequested += () => { var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, ShowStateMenu); };
             session.Faulted += ex => { var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => ShowMessage("Emulation stopped: " + ex.Message)); };
 
             bitmap = new WriteableBitmap(session.PixelWidth, session.PixelHeight);
@@ -83,7 +84,6 @@ namespace NesXbox.Views
         {
             SystemNavigationManager.GetForCurrentView().BackRequested -= OnBackRequested;
             KeyDown -= OnKeyDown;
-            Window.Current.Activated -= OnWindowActivated;
             AppServices.Suspending -= OnSuspending;
             AppServices.Resumed -= OnResumed;
             StopSession();
@@ -131,6 +131,16 @@ namespace NesXbox.Views
 
         void OnKeyDown(object sender, KeyRoutedEventArgs e)
         {
+            // The trigger that opened a menu closes it again. The opening press also arrives here, hence the guard time.
+            bool closeKey = (e.Key == VirtualKey.GamepadRightTrigger && PauseOverlay.Visibility == Visibility.Visible) ||
+                            (e.Key == VirtualKey.GamepadLeftTrigger && StateOverlay.Visibility == Visibility.Visible);
+            if (closeKey && !e.KeyStatus.WasKeyDown && session != null && session.Paused &&
+                (DateTime.UtcNow - pausedAt).TotalMilliseconds > 300)
+            {
+                e.Handled = true;
+                Resume();
+                return;
+            }
             // While playing, gamepad keys belong to the game, not XAML focus navigation.
             if (session != null && !session.Paused && e.Key >= VirtualKey.GamepadA && e.Key <= VirtualKey.GamepadRightThumbstickLeft) e.Handled = true;
         }
@@ -143,26 +153,76 @@ namespace NesXbox.Views
             if (session.Paused) Resume();
         }
 
-        // The Guide (center) button is reserved by the system and never reaches the app; pressing it
-        // deactivates our window, so that is the signal to pause.
-        void OnWindowActivated(object sender, WindowActivatedEventArgs e)
-        {
-            if (e.WindowActivationState == CoreWindowActivationState.Deactivated && session != null && !session.Paused)
-                ShowPause();
-        }
 
         void ShowPause()
         {
             if (session == null) return;
             session.Pause();
+            pausedAt = DateTime.UtcNow;
             SaveBattery();
             PauseOverlay.Visibility = Visibility.Visible;
             ResumeButton.Focus(FocusState.Programmatic);
         }
 
+        void ShowStateMenu()
+        {
+            if (session == null) return;
+            session.Pause();
+            pausedAt = DateTime.UtcNow;
+            var saved = AppServices.Library.StateSavedAtUtc(game);
+            StateInfo.Text = saved.HasValue ? "Saved state: " + saved.Value.ToLocalTime().ToString("g") : "No saved state yet";
+            LoadStateButton.IsEnabled = saved.HasValue;
+            StateOverlay.Visibility = Visibility.Visible;
+            SaveStateButton.Focus(FocusState.Programmatic);
+        }
+
+        void SaveState_Click(object sender, RoutedEventArgs e)
+        {
+            if (session == null) return;
+            try
+            {
+                AppServices.Library.WriteState(game, session.SaveState());
+                SaveBattery();
+                Resume();
+                ShowToast("State saved");
+            }
+            catch (IOException ex) { StateInfo.Text = "Could not save: " + ex.Message; }
+        }
+
+        void LoadState_Click(object sender, RoutedEventArgs e)
+        {
+            if (session == null) return;
+            byte[] data;
+            try { data = AppServices.Library.ReadState(game); }
+            catch (IOException ex) { StateInfo.Text = "Could not read the saved state: " + ex.Message; return; }
+            if (data == null || !session.LoadState(data))
+            {
+                StateInfo.Text = "This saved state cannot be loaded (damaged or from another version).";
+                return;
+            }
+            Resume();
+            ShowToast("State loaded");
+        }
+
+        DispatcherTimer toastTimer;
+
+        void ShowToast(string text)
+        {
+            Toast.Text = text;
+            Toast.Visibility = Visibility.Visible;
+            if (toastTimer == null)
+            {
+                toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+                toastTimer.Tick += (s, a) => { Toast.Visibility = Visibility.Collapsed; toastTimer.Stop(); };
+            }
+            toastTimer.Stop();
+            toastTimer.Start();
+        }
+
         void Resume()
         {
             PauseOverlay.Visibility = Visibility.Collapsed;
+            StateOverlay.Visibility = Visibility.Collapsed;
             session?.Resume();
             Focus(FocusState.Programmatic);
         }

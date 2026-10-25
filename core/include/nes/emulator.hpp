@@ -38,6 +38,11 @@ public:
     const Frame& frame() const { return ppu_.frame(); }
     std::span<const std::int16_t> audio() const { return apu_.samples(); }
 
+    // Save states: opaque, versioned blob for this cartridge. loadState() leaves the machine
+    // untouched if the blob is corrupt, from another version, or from a different cartridge.
+    std::vector<std::uint8_t> saveState();
+    bool loadState(std::span<const std::uint8_t> data);
+
     bool hasBattery() const { return mapper_ && mapper_->cart().battery; }
     std::span<std::uint8_t> prgRam() { return mapper_ ? mapper_->prgRam() : std::span<std::uint8_t>{}; }
 
@@ -53,6 +58,7 @@ private:
     void tick();                                 // one CPU cycle of PPU+APU time
     std::uint8_t readNoTick(std::uint16_t addr);
     void oamDma(std::uint8_t page);
+    void state(StateIO& io);
 
     Cpu6502 cpu_{*this};
     Ppu ppu_;

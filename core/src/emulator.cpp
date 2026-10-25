@@ -84,6 +84,48 @@ void NesMachine::oamDma(std::uint8_t page) {
     }
 }
 
+namespace {
+constexpr std::uint32_t kStateMagic = 0x5453584E; // "NXST"
+constexpr std::uint32_t kStateVersion = 1;
+} // namespace
+
+void NesMachine::state(StateIO& io) {
+    // Header: refuses states from another format version or another cartridge layout.
+    std::uint32_t magic = kStateMagic, version = kStateVersion;
+    std::uint32_t mapper = mapper_->cart().mapper;
+    std::uint32_t prg = std::uint32_t(mapper_->cart().prg.size()), chr = std::uint32_t(mapper_->cart().chr.size());
+    io(magic); io(version); io(mapper); io(prg); io(chr);
+    if (io.loading() && (magic != kStateMagic || version != kStateVersion || mapper != mapper_->cart().mapper ||
+                         prg != mapper_->cart().prg.size() || chr != mapper_->cart().chr.size())) {
+        io.bytes(nullptr, ~std::size_t(0)); // forces ok() == false
+        return;
+    }
+    cpu_.state(io);
+    ppu_.state(io);
+    apu_.state(io);
+    mapper_->state(io);
+    io(ram_); io(buttons_); io(shift_); io(strobe_); io(nmiLine_); io(openBus_); io(cycle_); io(frames_);
+}
+
+std::vector<std::uint8_t> NesMachine::saveState() {
+    std::vector<std::uint8_t> out;
+    if (!mapper_) return out;
+    StateIO io(out);
+    state(io);
+    return out;
+}
+
+bool NesMachine::loadState(std::span<const std::uint8_t> data) {
+    if (!mapper_ || data.empty()) return false;
+    std::vector<std::uint8_t> backup = saveState(); // restore point if the blob turns out bad halfway
+    StateIO io(data.data(), data.size());
+    state(io);
+    if (io.ok() && io.finished()) return true;
+    StateIO undo(backup.data(), backup.size());
+    state(undo);
+    return false;
+}
+
 const Frame& NesMachine::runFrame() {
     apu_.samples().clear();
     if (!mapper_) return ppu_.frame();

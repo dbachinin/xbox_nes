@@ -24,6 +24,19 @@ void cApiRoundTrip() {
     std::int16_t audio[2048];
     CHECK(nes_read_audio(m, audio, 2048) > 700);
     CHECK_EQ(nes_battery_size(m), 0u);
+    size_t n = nes_save_state(m, nullptr, 0);
+    std::vector<std::uint8_t> st(n);
+    CHECK_EQ(nes_save_state(m, st.data(), st.size()), n);
+    std::uint64_t h0 = nes_frame_hash(m);
+    for (int i = 0; i < 3; ++i) nes_run_frame(m);
+    CHECK_EQ(nes_load_state(m, st.data(), st.size()), 0);
+    for (int i = 0; i < 3; ++i) nes_run_frame(m);
+    std::uint64_t h1 = nes_frame_hash(m);
+    CHECK_EQ(nes_load_state(m, st.data(), st.size()), 0);
+    for (int i = 0; i < 3; ++i) nes_run_frame(m);
+    CHECK_EQ(nes_frame_hash(m), h1);
+    (void)h0;
+    CHECK(nes_load_state(m, st.data(), 10) != 0);
     nes_destroy(m);
 }
 

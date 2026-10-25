@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nes/bus.hpp"
+#include "nes/state.hpp"
 
 #include <cstdint>
 
@@ -23,6 +24,7 @@ public:
     void step();                  // one instruction or one interrupt entry
     void nmi() { nmiPending_ = true; }  // edge already detected by the caller
     void setIrq(bool level) { irqLine_ = level; }
+    void state(StateIO& io) { io(regs); io(cycles); io(jammed); io(nmiPending_); io(irqLine_); io(pollNow_); io(pollPrev_); }
 
     Registers regs;
     std::uint64_t cycles = 0;

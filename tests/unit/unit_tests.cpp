@@ -346,6 +346,47 @@ void machineRandomPrgNoCrash() {
     CHECK(!empty.hasCartridge());
 }
 
+void machineSaveStateRoundTrip() {
+    NesMachine m;
+    m.loadRom(makeTestRom());
+    for (int i = 0; i < 10; ++i) m.runFrame();
+    auto saved = m.saveState();
+    CHECK(saved.size() > 2048);
+    auto play = [&] {
+        m.setButtons(0, kRight);
+        for (int i = 0; i < 30; ++i) m.runFrame();
+        m.setButtons(0, 0);
+        for (int i = 0; i < 5; ++i) m.runFrame();
+        return m.frame().hash();
+    };
+    std::uint64_t first = play();
+    std::uint64_t cycles = m.cycles();
+    CHECK(m.loadState(saved));
+    CHECK_EQ(play(), first);                 // identical future after restoring
+    CHECK_EQ(m.cycles(), cycles);
+
+    // Corrupt, truncated or foreign states are refused and leave the machine untouched.
+    auto before = m.saveState();
+    auto bad = saved; bad[0] ^= 0xFF;
+    CHECK(!m.loadState(bad));
+    CHECK(!m.loadState(std::span<const std::uint8_t>(saved.data(), saved.size() - 1)));
+    auto longer = saved; longer.push_back(0);
+    CHECK(!m.loadState(longer));
+    CHECK(!m.loadState({}));
+    CHECK(m.saveState() == before);
+
+    NesMachine other;
+    other.loadRom(bankedRom(8, 0, 2));          // different mapper/sizes
+    CHECK(!other.loadState(saved));
+
+    // Mapper registers and CHR RAM are part of the state (MMC1 bank switch survives a round trip).
+    NesMachine mm;
+    mm.loadRom(bankedRom(8, 0, 1));
+    auto s1 = mm.saveState();
+    CHECK(mm.loadState(s1));
+    CHECK(mm.saveState() == s1);
+}
+
 // ---------------------------------------------------------------- APU
 void apuLengthAndSamples() {
     Asm a(0xC000);
@@ -393,6 +434,7 @@ int main(int argc, char** argv) {
         {"machine_nmi_per_frame", machineNmiPerFrame},
         {"machine_frame_cycles", machineFrameCycles},
         {"machine_random_prg_no_crash", machineRandomPrgNoCrash},
+        {"machine_save_state", machineSaveStateRoundTrip},
         {"apu_length_samples", apuLengthAndSamples},
     });
 }

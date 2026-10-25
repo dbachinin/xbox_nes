@@ -43,6 +43,12 @@ NES_API uint64_t nes_frame_hash(nes_machine* m);
 /* Copies up to `max_samples` mono int16 samples (48 kHz) produced by the last frame. */
 NES_API size_t nes_read_audio(nes_machine* m, int16_t* dst, size_t max_samples);
 
+/* Save states. nes_save_state returns the state size; it writes only if `dst_size` is large enough
+ * (call with dst = NULL to query the size). nes_load_state returns 0 on success; on failure the
+ * machine is left exactly as it was. */
+NES_API size_t nes_save_state(nes_machine* m, uint8_t* dst, size_t dst_size);
+NES_API int nes_load_state(nes_machine* m, const uint8_t* src, size_t size);
+
 /* Battery-backed PRG RAM. Size is 0 when the cartridge has no battery. */
 NES_API size_t nes_battery_size(nes_machine* m);
 NES_API size_t nes_battery_read(nes_machine* m, uint8_t* dst, size_t size);

@@ -9,20 +9,22 @@ namespace NesXbox.Services
     {
         public NesButtons Player1;
         public NesButtons Player2;
-        public bool PausePressed;   // View+Menu chord, edge-triggered
+        public bool PausePressed;      // RT pressed this frame (edge-triggered)
+        public bool StateMenuPressed;  // LT pressed this frame (edge-triggered)
         public int Connected;
     }
 
     /// <summary>
     /// Xbox controller -> NES pad mapping. Safe to poll from the emulation thread.
     /// A=A, B=B, X=turbo A, Y=turbo B, Menu=Start, View=Select, D-pad or left stick = directions.
-    /// Pause: the Xbox button (handled as window deactivation in GamePage) or the View+Menu chord.
+    /// RT opens the pause menu, LT the save-state menu; the Xbox and Share buttons stay with the system.
     /// </summary>
     public sealed class GamepadService
     {
         const double StickThreshold = 0.5;
         const int TurboHalfPeriod = 2;   // frames on / frames off: 15 presses per second at 60 Hz
-        bool pauseChordHeld;
+        const double TriggerPress = 0.6, TriggerRelease = 0.3; // hysteresis: an analog trigger must not chatter
+        bool rightHeld, leftHeld;
         int pollCount;
 
         public event Action ConnectionChanged;
@@ -43,15 +45,21 @@ namespace NesXbox.Services
             if (pads.Count > 0)
             {
                 var r = pads[0].GetCurrentReading();
-                bool chord = (r.Buttons & GamepadButtons.View) != 0 && (r.Buttons & GamepadButtons.Menu) != 0;
-                state.PausePressed = chord && !pauseChordHeld;
-                pauseChordHeld = chord;
+                state.PausePressed = Edge(r.RightTrigger, ref rightHeld);
+                state.StateMenuPressed = Edge(r.LeftTrigger, ref leftHeld);
                 state.Player1 = Map(r, turboOn);
-                if (chord) state.Player1 &= ~(NesButtons.Start | NesButtons.Select);
             }
-            else pauseChordHeld = false;
+            else rightHeld = leftHeld = false;
             if (pads.Count > 1) state.Player2 = Map(pads[1].GetCurrentReading(), turboOn);
             return state;
+        }
+
+        static bool Edge(double value, ref bool held)
+        {
+            bool pressed = held ? value > TriggerRelease : value > TriggerPress;
+            bool edge = pressed && !held;
+            held = pressed;
+            return edge;
         }
 
         public static NesButtons Map(GamepadReading r, bool turboOn)

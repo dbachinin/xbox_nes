@@ -103,7 +103,7 @@ The repository was empty: no `nes-xbox-starter` skeleton existed (only AGENTS.md
 
 * PAL timing not emulated (PAL ROMs run at NTSC speed). Mappers beyond 0/1/2/3/4/7 are rejected at import.
 * MMC3 IRQ uses a fixed-dot approximation; DMC DMA stalls not charged; sprite overflow bug not emulated.
-* No save states, no zip import, no QR codes (official page URLs are shown as text).
+* Save states: one slot per game, format version 1 (core-tested; UI on Xbox unverified). No zip import, no QR codes (official page URLs are shown as text).
 * Video path is `WriteableBitmap` with integer upscaling in the core; a SwapChainPanel path may be needed
   if Xbox measurements show frame pacing problems.
 * Storage-full handling is mapped (`ERROR_DISK_FULL` → "Not enough storage") but not tested.
