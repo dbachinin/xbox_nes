@@ -1,0 +1,40 @@
+<Page
+    x:Class="NesXbox.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="#FF101014">
+    <Grid Padding="24,16,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Top-level navigation: big focus targets, LB/RB also switch sections. -->
+        <Grid Grid.Row="0" Margin="0,0,0,12" x:Name="NavBar">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="NES / Xbox" FontSize="26" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,32,0"
+                       Foreground="{StaticResource AccentBrush}" />
+            <ListView x:Name="Tabs" Grid.Column="1" SelectionMode="Single" SelectionChanged="Tabs_SelectionChanged"
+                      ScrollViewer.HorizontalScrollMode="Disabled">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                <ListViewItem FontSize="22" Padding="16,8" Content="My Games" />
+                <ListViewItem FontSize="22" Padding="16,8" Content="Browse Homebrew" />
+                <ListViewItem FontSize="22" Padding="16,8" Content="Import from USB" />
+                <ListViewItem FontSize="22" Padding="16,8" Content="LAN Import" />
+                <ListViewItem FontSize="22" Padding="16,8" Content="Settings" />
+            </ListView>
+            <TextBlock x:Name="PadStatus" Grid.Column="2" VerticalAlignment="Center" FontSize="16"
+                       Foreground="{StaticResource MutedTextBrush}" />
+        </Grid>
+
+        <Frame x:Name="ContentFrame" Grid.Row="1" />
+    </Grid>
+</Page>

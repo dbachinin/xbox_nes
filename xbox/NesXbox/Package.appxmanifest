@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  IgnorableNamespaces="uap mp">
+
+  <!-- Publisher must equal the subject of the signing certificate (docs/BUILD_WINDOWS.md). -->
+  <Identity Name="NesXbox.DevMode" Publisher="CN=NesXboxDev" Version="0.1.0.0" />
+
+  <mp:PhoneIdentity PhoneProductId="36E16979-EBDE-43B0-8587-91DE9CAD596E" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+
+  <Properties>
+    <DisplayName>NES / Xbox</DisplayName>
+    <PublisherDisplayName>NES Xbox (developer build)</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Xbox" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="NesXbox.App">
+      <uap:VisualElements
+        DisplayName="NES / Xbox"
+        Description="NES emulator for Xbox Developer Mode"
+        BackgroundColor="#101014"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#101014" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- Required (together with removableStorage) for KnownFolders.RemovableDevices to expose .nes files. -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="nesrom">
+            <uap:DisplayName>NES ROM</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.nes</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <Capability Name="privateNetworkClientServer" />
+    <uap:Capability Name="removableStorage" />
+  </Capabilities>
+</Package>

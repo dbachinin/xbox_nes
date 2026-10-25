@@ -1,0 +1,45 @@
+name: windows-xbox-package
+
+# Compiles the UWP solution (C# app + native core) for x64 and produces a sideload package.
+# The package is signed with a throwaway certificate generated per run, so it is installable for
+# testing via Xbox Device Portal but is NOT a trusted/release signature. See docs/BUILD_WINDOWS.md.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Visual Studio UWP workload and Windows SDK (fail loudly if absent)
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Workload.Universal Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $vs) { Write-Error 'UWP workload (Microsoft.VisualStudio.Workload.Universal) with C++ x64 tools is not installed on this runner.'; exit 1 }
+          $sdk = "${env:ProgramFiles(x86)}\Windows Kits\10\Platforms\UAP\10.0.22621.0"
+          if (-not (Test-Path $sdk)) { Write-Error "Windows SDK 10.0.22621.0 not found at $sdk"; exit 1 }
+          Write-Host "Visual Studio: $vs"
+
+      - name: Build and package (self-signed, throwaway certificate)
+        shell: pwsh
+        run: pwsh scripts/build-xbox-package.ps1 -Configuration Release -SelfSign
+
+      - name: Upload package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NesXbox-x64-sideload-UNTRUSTED-SIGNATURE
+          path: out/AppPackages/**
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msbuild-binlog
+          path: out/msbuild.binlog
+          if-no-files-found: ignore

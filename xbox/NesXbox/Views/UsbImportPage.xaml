@@ -1,0 +1,43 @@
+<Page
+    x:Class="NesXbox.Views.UsbImportPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:logic="using:NesXbox.Logic">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <Button x:Name="RescanButton" Content="Rescan" Style="{StaticResource BigButton}" Click="Rescan_Click" />
+            <Button x:Name="ImportSelectedButton" Content="Import selected" Style="{StaticResource BigButton}" Click="ImportSelected_Click" />
+            <Button x:Name="ImportAllButton" Content="Import all ready" Style="{StaticResource BigButton}" Click="ImportAll_Click" />
+            <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource BigButton}" Click="Cancel_Click" Visibility="Collapsed" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,8">
+            <TextBlock x:Name="StatusLine" Style="{StaticResource StatusText}" FontSize="22" Foreground="White" />
+            <TextBlock x:Name="VolumesLine" Style="{StaticResource StatusText}" />
+            <ProgressBar x:Name="Progress" Height="6" Margin="0,6,0,0" Visibility="Collapsed" />
+        </StackPanel>
+
+        <ListView x:Name="Files" Grid.Row="2" SelectionMode="Multiple">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="logic:RomCandidate">
+                    <StackPanel Padding="4,6">
+                        <TextBlock Text="{x:Bind Title}" FontSize="20" />
+                        <TextBlock FontSize="15" Opacity="0.7">
+                            <Run Text="{x:Bind StatusText}" /> · <Run Text="{x:Bind Location}" />
+                        </TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <TextBlock Grid.Row="3" Style="{StaticResource StatusText}" FontSize="16" Margin="0,8,0,0"
+                   Text="Put .nes files on a USB drive (root or a NES folder), insert it, then Rescan. Files are copied into the app; the drive is only read. If no drive appears, use LAN Import." />
+    </Grid>
+</Page>

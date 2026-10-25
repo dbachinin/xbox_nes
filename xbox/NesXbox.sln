@@ -1,0 +1,39 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NesXbox", "NesXbox\NesXbox.csproj", "{5C489C58-5CDC-4BD2-B888-0AC47F111F33}"
+	ProjectSection(ProjectDependencies) = postProject
+		{466300A7-11C5-4CB2-BE1F-26282486252D} = {466300A7-11C5-4CB2-BE1F-26282486252D}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NesXbox.Logic", "NesXbox.Logic\NesXbox.Logic.csproj", "{DD221C69-D119-48C9-A913-93FD49AC11C5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NesCoreNative", "NesCoreNative\NesCoreNative.vcxproj", "{466300A7-11C5-4CB2-BE1F-26282486252D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5C489C58-5CDC-4BD2-B888-0AC47F111F33}.Debug|x64.ActiveCfg = Debug|x64
+		{5C489C58-5CDC-4BD2-B888-0AC47F111F33}.Debug|x64.Build.0 = Debug|x64
+		{5C489C58-5CDC-4BD2-B888-0AC47F111F33}.Debug|x64.Deploy.0 = Debug|x64
+		{5C489C58-5CDC-4BD2-B888-0AC47F111F33}.Release|x64.ActiveCfg = Release|x64
+		{5C489C58-5CDC-4BD2-B888-0AC47F111F33}.Release|x64.Build.0 = Release|x64
+		{5C489C58-5CDC-4BD2-B888-0AC47F111F33}.Release|x64.Deploy.0 = Release|x64
+		{DD221C69-D119-48C9-A913-93FD49AC11C5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DD221C69-D119-48C9-A913-93FD49AC11C5}.Debug|x64.Build.0 = Debug|Any CPU
+		{DD221C69-D119-48C9-A913-93FD49AC11C5}.Release|x64.ActiveCfg = Release|Any CPU
+		{DD221C69-D119-48C9-A913-93FD49AC11C5}.Release|x64.Build.0 = Release|Any CPU
+		{466300A7-11C5-4CB2-BE1F-26282486252D}.Debug|x64.ActiveCfg = Debug|x64
+		{466300A7-11C5-4CB2-BE1F-26282486252D}.Debug|x64.Build.0 = Debug|x64
+		{466300A7-11C5-4CB2-BE1F-26282486252D}.Release|x64.ActiveCfg = Release|x64
+		{466300A7-11C5-4CB2-BE1F-26282486252D}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

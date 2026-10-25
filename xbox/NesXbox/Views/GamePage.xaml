@@ -1,0 +1,27 @@
+<Page
+    x:Class="NesXbox.Views.GamePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Black" IsTabStop="True">
+    <Grid>
+        <!-- Shown at an exact multiple of the NES resolution in physical pixels: no smoothing. -->
+        <Image x:Name="Screen" Stretch="Fill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+        <TextBlock x:Name="DebugOverlay" FontFamily="Consolas" FontSize="14" Foreground="Lime" Margin="8"
+                   HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Collapsed" />
+
+        <TextBlock x:Name="Message" FontSize="24" TextWrapping="Wrap" MaxWidth="800" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+
+        <Grid x:Name="PauseOverlay" Background="#CC000000" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16" Width="360">
+                <TextBlock Text="Pause" FontSize="40" FontWeight="Bold" HorizontalAlignment="Center" />
+                <TextBlock x:Name="PauseTitle" FontSize="20" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <Button x:Name="ResumeButton" Content="Resume" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Resume_Click" />
+                <Button Content="Reset game" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Reset_Click" />
+                <Button Content="Quit to library" FontSize="24" HorizontalAlignment="Stretch" Padding="12" Click="Quit_Click" />
+                <TextBlock Text="In game: View + Menu opens this menu" FontSize="16" Opacity="0.6" HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

@@ -1,0 +1,44 @@
+# Build output
+build/
+cmake-build-*/
+CMakeUserPresets.json
+out/
+bin/
+obj/
+*.binlog
+.vs/
+*.user
+*.suo
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Local configuration and credentials
+/.aws/
+/.codex/
+/.agents/
+.env
+.env.*
+
+# Downloaded test ROMs (scripts/fetch-test-roms.sh) and any user ROMs: never commit
+tests/fixtures/roms/
+*.[nN][eE][sS]
+*.[sS][aA][vV]
+
+# Signing material: never commit
+*.pfx
+*.p12
+*.cer
+*.key
+*.pem
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+
+# OS metadata
+.DS_Store
+Thumbs.db

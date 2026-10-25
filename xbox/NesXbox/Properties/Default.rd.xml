@@ -1,0 +1,8 @@
+<!-- .NET Native runtime directives (Release builds). DataContractJsonSerializer in NesXbox.Logic
+     needs serialization metadata for library.json types. -->
+<Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata">
+  <Application>
+    <Assembly Name="*Application*" Dynamic="Required All" />
+    <Assembly Name="NesXbox.Logic" Dynamic="Required All" Serialize="Required All" />
+  </Application>
+</Directives>

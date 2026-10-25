@@ -1,0 +1,42 @@
+name: linux-core
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [debug, release, asan]
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y ninja-build clang cmake
+      - name: Fetch licensed test fixtures (checksummed)
+        run: scripts/fetch-test-roms.sh
+      - name: Configure
+        run: |
+          if [ "${{ matrix.compiler }}" = clang ]; then export CXX=clang++; else export CXX=g++; fi
+          cmake --preset ${{ matrix.preset }}
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --parallel
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }} -E managed.logic
+
+  managed-logic:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Build native core (for the P/Invoke test)
+        run: sudo apt-get update && sudo apt-get install -y ninja-build && cmake --preset release && cmake --build --preset release --target nescore
+      - name: Managed shell-logic tests
+        env:
+          NESCORE_PATH: ${{ github.workspace }}/build/release/libnescore.so
+        run: dotnet run -c Release --project xbox/NesXbox.Logic.Tests
